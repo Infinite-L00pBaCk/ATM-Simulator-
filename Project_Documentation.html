@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ATM Simulator - Project Report</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;color:#1a1a2e;line-height:1.7;padding:40px 60px;max-width:920px;margin:auto}
+  h1{font-size:26px;color:#0f3460;border-bottom:3px solid #0f3460;padding-bottom:10px;margin:30px 0 10px}
+  h2{font-size:20px;color:#16213e;margin:24px 0 10px;border-left:4px solid #e94560;padding-left:12px}
+  h3{font-size:16px;color:#0f3460;margin:16px 0 8px}
+  p,li{font-size:14px;margin-bottom:8px}
+  ul,ol{padding-left:24px}
+  table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:13px}
+  th,td{border:1px solid #ccc;padding:8px 12px;text-align:left}
+  th{background:#0f3460;color:#fff}
+  tr:nth-child(even){background:#f0f4ff}
+  code{font-family:'Fira Code',monospace;background:#eef;padding:2px 6px;border-radius:3px;font-size:13px}
+  pre{background:#1a1a2e;color:#e0e0e0;padding:16px;border-radius:6px;overflow-x:auto;font-size:13px;margin:10px 0 18px;font-family:'Fira Code',monospace}
+  .cover{text-align:center;padding:50px 0 35px;border-bottom:2px solid #0f3460;margin-bottom:30px}
+  .cover h1{font-size:34px;border:none;color:#0f3460}
+  .cover p{font-size:15px;color:#555}
+  .badge{display:inline-block;background:#e94560;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin:2px}
+  .note{background:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin:12px 0;border-radius:4px;font-size:13px}
+  .success{background:#d4edda;border-left:4px solid #28a745;padding:12px;margin:12px 0;border-radius:4px;font-size:13px}
+  .diagram{background:#f8f9fa;border:1px solid #ddd;padding:20px;border-radius:8px;margin:12px 0;font-family:'Fira Code',monospace;font-size:13px;white-space:pre;line-height:1.4}
+  @media print{body{padding:20px 40px}}
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <h1>ATM Simulator</h1>
+  <p><strong>C++ Console Application - Project Report</strong></p>
+  <p>Pinnacle Labs Internship Task</p>
+  <p style="margin-top:16px">
+    <strong>Developer:</strong> Priyam Prakash<br>
+    <strong>Language:</strong> C++17<br>
+    <strong>Date:</strong> May 2026
+  </p>
+  <p style="margin-top:12px">
+    <span class="badge">OOP</span>
+    <span class="badge">File I/O</span>
+    <span class="badge">Bank Integration</span>
+    <span class="badge">Serialization</span>
+    <span class="badge">Encapsulation</span>
+  </p>
+</div>
+
+<!-- ============================================================ -->
+<h1>1. Project Overview</h1>
+<p>This project implements a fully-functional <strong>ATM (Automated Teller Machine) Simulator</strong> in C++ that is <strong>directly connected to a Banking System</strong>. The ATM reads from and writes to the bank's shared data files, meaning any account created in the Banking System is immediately accessible at the ATM - just like a real-world ATM connected to a bank's central database.</p>
+
+<div class="success">
+  <strong>Key Achievement:</strong> The ATM Simulator and Banking System share the same <code>accounts.dat</code> and <code>transactions.dat</code> files. Deposits, withdrawals, and transfers made at the ATM are reflected in the Banking System and vice versa.
+</div>
+
+<h2>1.1 Features</h2>
+<table>
+  <tr><th>#</th><th>Feature</th><th>Description</th></tr>
+  <tr><td>1</td><td>Bank Integration</td><td>Reads accounts from the Pinnacle National Bank's shared database files</td></tr>
+  <tr><td>2</td><td>PIN Authentication</td><td>4-digit PIN verification with 3-attempt lockout for security</td></tr>
+  <tr><td>3</td><td>Check Balance</td><td>Displays current account balance in a formatted box</td></tr>
+  <tr><td>4</td><td>Cash Withdrawal</td><td>Custom amount withdrawal with Rs. 25,000 daily limit enforcement</td></tr>
+  <tr><td>5</td><td>Quick Cash</td><td>Pre-set denominations: Rs. 500, 1000, 2000, 5000, 10000</td></tr>
+  <tr><td>6</td><td>Deposit Funds</td><td>Cash deposit with instant balance update</td></tr>
+  <tr><td>7</td><td>Fund Transfer</td><td>Account-to-account transfer with recipient validation</td></tr>
+  <tr><td>8</td><td>Mini Statement</td><td>Last 5 transactions displayed in compact format</td></tr>
+  <tr><td>9</td><td>Change PIN</td><td>Secure PIN update with current PIN re-verification</td></tr>
+  <tr><td>10</td><td>Receipt Generation</td><td>Automatic text-file receipts saved to <code>receipts/</code></td></tr>
+  <tr><td>11</td><td>Admin Mode</td><td>Create new accounts by entering ADMIN at card prompt</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>2. Architecture &amp; File Structure</h1>
+
+<h2>2.1 System Architecture</h2>
+<div class="diagram">
+                    +------------------+
+                    |    main.cpp      |  Entry point, session loop
+                    +--------+---------+
+                             |
+                    +--------v---------+
+                    |    ATMachine     |  Controller / Orchestrator
+                    |  (.h/.cpp)       |  Sessions, operations, I/O
+                    +---+----------+---+
+                        |          |
+          +-------------+     +----+-----------+
+          |                   |                |
++---------v------+   +--------v-----+   +------v-----------+
+| ATMAccount     |   | Transaction  |   | Shared Bank Files|
+| (.h/.cpp)      |   | (.h/.cpp)    |   | (accounts.dat    |
+| Account data   |   | Txn records  |   |  transactions.dat|
++----------------+   +--------------+   +------+-----------+
+                                               |
+                                  Banking System Directory
+                                  (Pinnacle National Bank)
+</div>
+
+<h2>2.2 File Descriptions</h2>
+<table>
+  <tr><th>File</th><th>Role</th></tr>
+  <tr><td><code>main.cpp</code></td><td>Program entry point. Displays welcome screen, runs the main ATM session loop.</td></tr>
+  <tr><td><code>ATMachine.h/.cpp</code></td><td>Central controller class. Manages sessions, ATM operations (withdraw, deposit, transfer, etc.), file I/O, receipt generation, and daily withdrawal limits.</td></tr>
+  <tr><td><code>ATMAccount.h/.cpp</code></td><td>Represents a single bank account with balance, PIN, and status. Handles deposit/withdraw logic and serialization.</td></tr>
+  <tr><td><code>Transaction.h/.cpp</code></td><td>Represents a single transaction record with type, amount, timestamp, and description. Supports 7 transaction types.</td></tr>
+  <tr><td><code>accounts.dat</code></td><td><strong>Shared file</strong> in the Banking System directory - stores all account records.</td></tr>
+  <tr><td><code>transactions.dat</code></td><td><strong>Shared file</strong> in the Banking System directory - append-only transaction log.</td></tr>
+  <tr><td><code>receipts/</code></td><td>Auto-generated folder containing timestamped receipt text files.</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>3. Bank Integration - How It Works</h1>
+
+<p>The ATM Simulator connects to the Banking System by reading from and writing to the <strong>same data files</strong>. This is the core integration mechanism:</p>
+
+<h2>3.1 Shared Data Files</h2>
+<p>Both the Banking System and ATM Simulator use identical pipe-delimited serialization formats:</p>
+
+<h3>accounts.dat format:</h3>
+<pre>PNB-1001|PRIYAM PRAKASH|4046|3500.00|1|2026-05-07 19:16:35
+PNB-1003|SURYA|1234|5000.00|1|2026-05-14 13:14:30</pre>
+<p>Fields: <code>AccountNo | Name | PIN | Balance | Active(1/0) | CreationDate</code></p>
+
+<h3>transactions.dat format:</h3>
+<pre>PNB-1001|DEPOSIT|500.00|1500.00|2026-05-07 19:17:05|Cash deposit
+PNB-1001|TRANSFER_IN|2000.00|3500.00|2026-05-14 13:11:41|Transfer from PNB-1002</pre>
+<p>Fields: <code>AccountNo | Type | Amount | BalanceAfter | Timestamp | Description</code></p>
+
+<h2>3.2 Dynamic Account Loading</h2>
+<p>Every time a user "inserts their card" at the ATM, the system <strong>reloads accounts fresh</strong> from the bank's data file. This means:</p>
+<ul>
+  <li>New accounts created in the Banking System are <strong>instantly available</strong> at the ATM</li>
+  <li>Balance changes made in the Banking System are <strong>immediately reflected</strong></li>
+  <li>Closed accounts are <strong>automatically rejected</strong> by the ATM</li>
+</ul>
+
+<h2>3.3 Dual-Prefix Support</h2>
+<p>The ATM supports both account number formats:</p>
+<ul>
+  <li><code>PNB-xxxx</code> - Accounts created by the Banking System</li>
+  <li><code>ATM-xxxx</code> - Accounts created via ATM Admin mode</li>
+</ul>
+
+<div class="note">
+  <strong>How it works:</strong> The ATM constructor parses account numbers by finding the dash (<code>-</code>) separator and extracting the numeric suffix, making it prefix-agnostic. Both PNB and ATM accounts are stored in the same shared file.
+</div>
+
+<!-- ============================================================ -->
+<h1>4. OOP Concepts Used</h1>
+
+<h2>4.1 Encapsulation</h2>
+<p>All class data members are <code>private</code>. Access is controlled through public methods:</p>
+<pre>class ATMAccount {
+private:
+    std::string pin;       // Hidden - cannot be read directly
+    double balance;        // Modified only via deposit()/withdraw()
+public:
+    bool verifyPin(const std::string&amp; inputPin) const;
+    bool deposit(double amount);   // Controlled write access
+    double getBalance() const;     // Controlled read access
+};</pre>
+
+<h2>4.2 Abstraction</h2>
+<p>The <code>ATMachine</code> class hides the complexity of file I/O, account lookup, daily limits, and receipt generation. The <code>main.cpp</code> simply calls <code>atm.startSession()</code> without knowing internal details.</p>
+
+<h2>4.3 Modularity</h2>
+<table>
+  <tr><th>Class</th><th>Responsibility</th></tr>
+  <tr><td>ATMAccount</td><td>Manages one account's data and operations</td></tr>
+  <tr><td>Transaction</td><td>Represents and formats one transaction record</td></tr>
+  <tr><td>ATMachine</td><td>Orchestrates everything (business logic + file I/O)</td></tr>
+  <tr><td>main.cpp</td><td>User interface layer (welcome screen + loop)</td></tr>
+</table>
+
+<h2>4.4 Enum Class</h2>
+<pre>enum class TransactionType {
+    DEPOSIT, WITHDRAWAL, TRANSFER_IN, TRANSFER_OUT,
+    BALANCE_ENQUIRY, PIN_CHANGE, ACCOUNT_CREATION
+};</pre>
+<p>Scoped enum (<code>enum class</code>) prevents accidental integer comparisons and provides type safety.</p>
+
+<!-- ============================================================ -->
+<h1>5. Core Logic Explained</h1>
+
+<h2>5.1 ATM Session Flow</h2>
+<div class="diagram">
+  ATM Start
+       |
+  Load accounts from bank's accounts.dat
+  Display Welcome Screen
+       |
+  +---> "Insert Card" Prompt
+  |         |
+  |    User enters Account No. (e.g. PNB-1001)
+  |         |
+  |    Reload accounts from bank (fresh data)
+  |    Lookup account --> Not found? Error
+  |    Check active? --> Inactive? Error
+  |         |
+  |    PIN Authentication (3 attempts max)
+  |    Failed 3 times? --> CARD BLOCKED
+  |         |
+  |    +---> Session Menu
+  |    |    1. Check Balance    5. Fund Transfer
+  |    |    2. Withdraw Cash    6. Mini Statement
+  |    |    3. Quick Cash       7. Change PIN
+  |    |    4. Deposit Funds    8. Print Receipt
+  |    |    0. Eject Card
+  |    |         |
+  |    |    Execute operation
+  |    |    Log transaction to shared transactions.dat
+  |    |    Save updated accounts to shared accounts.dat
+  |    |    Generate receipt file
+  |    |         |
+  |    +----<----+ (back to menu)
+  |         |
+  |    Eject Card (option 0)
+  |         |
+  +----<----+ (back to welcome)
+</div>
+
+<h2>5.2 Withdrawal Logic</h2>
+<pre>// Daily limit check (Rs. 25,000 per day)
+if (dailyWithdrawnAmount + amount > 25000.00) --> REJECT
+
+// Balance check
+if (amount > balance) --> REJECT ("Insufficient balance!")
+
+// Success path
+balance -= amount;
+dailyWithdrawnAmount += amount;
+Log transaction, save accounts, generate receipt</pre>
+
+<h2>5.3 Fund Transfer Logic</h2>
+<ol>
+  <li>Verify recipient account exists and is active</li>
+  <li>Check sender != recipient (prevent self-transfer)</li>
+  <li>Call <code>sender.withdraw(amount)</code></li>
+  <li>Call <code>recipient.deposit(amount)</code></li>
+  <li>Log TWO transactions: <code>TRANSFER_OUT</code> for sender, <code>TRANSFER_IN</code> for recipient</li>
+  <li>Save accounts and generate receipt</li>
+</ol>
+
+<h2>5.4 PIN Change Logic</h2>
+<ol>
+  <li>Verify current PIN matches</li>
+  <li>Validate new PIN is exactly 4 digits</li>
+  <li>Ensure new PIN differs from old PIN</li>
+  <li>Confirm new PIN (entered twice)</li>
+  <li>Update PIN, save to file, log transaction</li>
+</ol>
+
+<!-- ============================================================ -->
+<h1>6. Security Features</h1>
+
+<table>
+  <tr><th>Feature</th><th>Implementation</th></tr>
+  <tr><td>PIN Lockout</td><td>After 3 consecutive failed PIN entries, the card is blocked for that session</td></tr>
+  <tr><td>Daily Withdrawal Limit</td><td>Rs. 25,000 maximum per day across all withdrawal types (regular + quick cash)</td></tr>
+  <tr><td>Session Isolation</td><td>Each card insertion creates an independent session with fresh daily limits</td></tr>
+  <tr><td>Inactive Account Rejection</td><td>Closed/inactive accounts cannot authenticate at the ATM</td></tr>
+  <tr><td>Input Validation</td><td>All numeric inputs are validated with <code>cin.fail()</code> checks to prevent crashes</td></tr>
+  <tr><td>Self-Transfer Prevention</td><td>Cannot transfer funds to the same account</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>7. Error Handling</h1>
+
+<table>
+  <tr><th>Scenario</th><th>How It's Handled</th></tr>
+  <tr><td>Invalid menu input (letters)</td><td><code>cin.fail()</code> check + <code>cin.clear()</code> to reset stream</td></tr>
+  <tr><td>Account not found</td><td>Error message, return to card prompt</td></tr>
+  <tr><td>Wrong PIN</td><td>Attempt counter, block after 3 failures</td></tr>
+  <tr><td>Insufficient balance</td><td>Rejected with available balance shown</td></tr>
+  <tr><td>Daily limit exceeded</td><td>Shows limit, used amount, and remaining</td></tr>
+  <tr><td>Negative amount</td><td>Rejected ("must be positive")</td></tr>
+  <tr><td>Inactive account</td><td>Rejected ("contact your bank")</td></tr>
+  <tr><td>Transfer to self</td><td>Rejected</td></tr>
+  <tr><td>File doesn't exist (first run)</td><td>Gracefully returns empty vector</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>8. Key C++ Concepts Used</h1>
+
+<table>
+  <tr><th>Concept</th><th>Where Used</th></tr>
+  <tr><td>Classes &amp; Objects</td><td>ATMAccount, Transaction, ATMachine</td></tr>
+  <tr><td>Constructors (default + parameterized)</td><td>All classes</td></tr>
+  <tr><td>Enum class</td><td>TransactionType (7 types)</td></tr>
+  <tr><td>Vectors (<code>std::vector</code>)</td><td>Storing accounts and transactions dynamically</td></tr>
+  <tr><td>String streams (<code>std::ostringstream</code>)</td><td>Serialization and formatting</td></tr>
+  <tr><td>File streams (<code>ifstream/ofstream</code>)</td><td>Reading/writing shared .dat files</td></tr>
+  <tr><td>Static methods</td><td><code>Transaction::getCurrentTimestamp()</code>, deserialize methods</td></tr>
+  <tr><td>Const correctness</td><td>Getter methods and read-only operations marked <code>const</code></td></tr>
+  <tr><td><code>std::setw</code>, <code>std::setprecision</code></td><td>Formatted table output</td></tr>
+  <tr><td>Header guards (<code>#ifndef</code>)</td><td>All .h files to prevent double-inclusion</td></tr>
+  <tr><td><code>std::getline</code></td><td>Reading names with spaces, parsing pipe-delimited data</td></tr>
+  <tr><td>Exception handling (<code>try/catch</code>)</td><td>Safe account number parsing for dual-prefix support</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h1>9. How to Compile &amp; Run</h1>
+
+<h2>9.1 Using g++ (MinGW)</h2>
+<pre>cd "C:\Users\Priyam Prakash\OneDrive\Desktop\ATM simulator"
+g++ -o atm_simulator.exe main.cpp ATMachine.cpp ATMAccount.cpp Transaction.cpp -std=c++17
+.\atm_simulator.exe</pre>
+
+<h2>9.2 Quick Start Guide</h2>
+<ol>
+  <li>Launch the ATM simulator</li>
+  <li>Enter your bank account number (e.g. <code>PNB-1001</code>)</li>
+  <li>Enter your 4-digit PIN to authenticate</li>
+  <li>Use the menu for banking operations</li>
+  <li>Select <code>0</code> to eject your card</li>
+  <li>Type <code>EXIT</code> to shut down the ATM</li>
+</ol>
+
+<div class="note">
+  <strong>Tip:</strong> You can also type <code>ADMIN</code> at the card prompt to create a new account directly at the ATM.
+</div>
+
+<!-- ============================================================ -->
+<h1>10. Conclusion</h1>
+
+<p>This ATM Simulator demonstrates core software engineering principles including object-oriented design, modular architecture, shared file-based persistence, input validation, and security best practices. The integration with the Banking System showcases how two independent applications can share a common data layer - mirroring how real-world ATMs connect to a bank's central database.</p>
+
+<p>The project showcases proficiency in C++17 features, data serialization, cross-application data sharing, and building interactive console applications with real-world business logic such as daily withdrawal limits, PIN lockout mechanisms, and transaction audit trails.</p>
+
+<div class="note">
+  <strong>Note:</strong> This project was developed as part of the Pinnacle Labs Internship Task.
+</div>
+
+<hr style="margin-top:40px">
+<p style="text-align:center;color:#888;font-size:12px;margin-top:20px">
+  ATM Simulator v2.0 | Connected to Pinnacle National Bank | Developed by Priyam Prakash | Pinnacle Labs Internship | May 2026
+</p>
+
+</body>
+</html>
