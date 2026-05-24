@@ -1,0 +1,14 @@
+========================================
+          PINNACLE ATM RECEIPT          
+========================================
+  Date/Time  : 2026-05-15 19:08:48
+  ATM ID     : Pinnacle ATM - Branch 001
+  Account    : PNB-1001
+  Name       : PRIYAM PRAKASH
+----------------------------------------
+  Transaction: WITHDRAWAL
+  Amount     : Rs. 150.00
+  Balance    : Rs. 2850.00
+----------------------------------------
+  Thank you for using Pinnacle ATM!
+========================================
